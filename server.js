@@ -7,11 +7,14 @@ const PORT = process.env.PORT || 8000;
 const TODOS_PATH = process.env.TODOS_PATH || path.join(__dirname, "data", "todos.json");
 // const TODOS_PATH = process.env.TODOS_PATH || __dirname + "/data/todos.json";
 
-import todos from "./routes/todos.js"
-import exampleHeaders from "./routes/example-headers.js"
-
+import todos from "./routes/todos.js";
+import exampleHeaders from "./routes/example-headers.js";
+import { createConn } from "./middleware/dbConn.js";
+import { initDb } from "./utils/initDbAndTable.js";
 // Body parser
 app.use(express.json());
+
+app.use(createConn);
 
 app.use((req, res, next) => {
   console.log(`${req.method} ${req.url}`);
@@ -30,7 +33,7 @@ app.get("/", async (req, res) => {
 app.use("/todos", todos);
 app.use("/headers-example", exampleHeaders);
 
-
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
+  await initDb()
   console.log(`Server is running on port ${PORT}...`);
 });
