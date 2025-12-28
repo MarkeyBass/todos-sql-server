@@ -9,7 +9,7 @@ const TODOS_PATH = process.env.TODOS_PATH || path.join(__dirname, "data", "todos
 
 import todos from "./routes/todos.js";
 import exampleHeaders from "./routes/example-headers.js";
-import { initDb } from "./utils/db.js";
+import { getConn, initDb } from "./utils/db.js";
 // Body parser
 app.use(express.json());
 

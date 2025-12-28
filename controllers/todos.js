@@ -64,10 +64,8 @@ export const updateTodo = async (req, res) => {
   }
 };
 
-
-
 // {baseUrl}/todos/1
-export const deleteTodo =  async (req, res) => {
+export const deleteTodo = async (req, res) => {
   try {
     const { id } = req.params;
     const intId = parseInt(id);
@@ -90,21 +88,28 @@ export const deleteTodo =  async (req, res) => {
 // Create todo
 export const createTodo = async (req, res) => {
   try {
-    const todos = await readTodos(TODOS_PATH);
-
     const isCompleted = req.body.completed === "true";
 
     const newTodo = {
       title: req.body.title || "default todo",
       description: req.body.description || "",
       completed: isCompleted,
-      id: getNextId(todos),
       created_at: new Date(),
       updated_at: new Date(),
     };
-    todos.push(newTodo);
-    await writeTodos(todos, TODOS_PATH);
-    res.status(201).json({ msg: "success", data: req.body });
+    const result = await req.dbConn.query(
+      "INSERT INTO todos (title, description, completed, created_at, updated_at) VALUES (?, ?, ?, ?, ?)",
+      [
+        newTodo.title,
+        newTodo.description,
+        newTodo.completed,
+        newTodo.created_at,
+        newTodo.updated_at,
+      ]
+    );
+
+    const todo = await req.dbConn.query("SELECT * FROM todos WHERE id = ?", [result[0].insertId]);
+    res.status(201).json({ msg: "success", data: todo[0] });
   } catch (err) {
     console.error(err);
     res.status(500).json({ msg: "error" + err.message, data: null });
