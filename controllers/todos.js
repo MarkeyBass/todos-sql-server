@@ -88,15 +88,18 @@ export const deleteTodo = async (req, res) => {
 // Create todo
 export const createTodo = async (req, res) => {
   try {
-    const isCompleted = req.body.completed === "true";
+    const isCompleted = req.body.completed === "true" || req.body.completed === true;
+
+    const now = new Date();
 
     const newTodo = {
       title: req.body.title || "default todo",
       description: req.body.description || "",
       completed: isCompleted,
-      created_at: new Date(),
-      updated_at: new Date(),
+      created_at: now,
+      updated_at: now,
     };
+
     const result = await req.dbConn.query(
       "INSERT INTO todos (title, description, completed, created_at, updated_at) VALUES (?, ?, ?, ?, ?)",
       [
