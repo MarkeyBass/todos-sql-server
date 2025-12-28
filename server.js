@@ -1,11 +1,8 @@
 import express from "express";
 import path from "path";
 
-const __dirname = path.resolve();
 const app = express();
 const PORT = process.env.PORT || 8000;
-const TODOS_PATH = process.env.TODOS_PATH || path.join(__dirname, "data", "todos.json");
-// const TODOS_PATH = process.env.TODOS_PATH || __dirname + "/data/todos.json";
 
 import todos from "./routes/todos.js";
 import exampleHeaders from "./routes/example-headers.js";

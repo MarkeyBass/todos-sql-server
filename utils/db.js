@@ -29,18 +29,19 @@ export async function initDb() {
 
   await initConnection.end();
 }
+
 let conn = null;
 
 export async function getConn() {
   if (conn) return conn;
   else {
-    const dbConnection = await mysql.createConnection({
+    const conn = await mysql.createConnection({
       host: "localhost",
       user: "root",
       password: "root",
       port: 3306,
       database: "todos",
     });
-    return dbConnection;
+    return conn;
   }
 }
