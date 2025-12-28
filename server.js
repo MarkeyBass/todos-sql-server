@@ -9,12 +9,15 @@ const TODOS_PATH = process.env.TODOS_PATH || path.join(__dirname, "data", "todos
 
 import todos from "./routes/todos.js";
 import exampleHeaders from "./routes/example-headers.js";
-import { createConn } from "./middleware/dbConn.js";
 import { initDb } from "./utils/db.js";
 // Body parser
 app.use(express.json());
 
-app.use(createConn);
+// Attaches db connection to req object
+app.use(async (req, res, next) => {
+  req.dbConn = await getConn();
+  next();
+});
 
 app.use((req, res, next) => {
   console.log(`${req.method} ${req.url}`);
@@ -34,6 +37,6 @@ app.use("/todos", todos);
 app.use("/headers-example", exampleHeaders);
 
 app.listen(PORT, async () => {
-  await initDb()
+  await initDb();
   console.log(`Server is running on port ${PORT}...`);
 });
