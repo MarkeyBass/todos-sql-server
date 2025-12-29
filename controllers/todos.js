@@ -10,12 +10,26 @@ export const getTodos = async (req, res) => {
   try {
     const { completed } = req.query;
 
-    const todosArr = await readTodos(TODOS_PATH);
-    let filterdArr = todosArr;
-    if (completed !== undefined) {
-      filterdArr = todosArr.filter((todo) => String(todo.completed) === completed);
+    let results;
+    let isCompleted;
+
+    if (completed === "true") {
+      isCompleted = true;
+    } else if (completed === "false") {
+      isCompleted = false;
     }
-    res.status(200).json({ msg: "success", data: filterdArr });
+
+    // const isCompleted = completed === "true" ? true : completed === "false" ? false : undefined;
+
+    if (completed !== undefined) {
+      results = await req.dbConn.query("SELECT * FROM todos WHERE completed = ?;", isCompleted);
+    } else {
+      results = await req.dbConn.query("SELECT * FROM todos;");
+    }
+
+    const todosArr = results[0];
+
+    res.status(200).json({ msg: "success", data: todosArr });
   } catch (err) {
     console.error(err);
     res.status(500).json({ msg: "error" + err.message, data: null });
@@ -28,8 +42,10 @@ export const getTodo = async (req, res) => {
     const { id } = req.params;
     const intId = parseInt(id);
     if (isNaN(intId)) throw new Error("Invalid id, please use an integer.");
-    const todos = await readTodos(TODOS_PATH);
-    const todo = todos.find((t) => t.id === intId);
+
+    const results = await req.dbConn.query('SELECT * FROM todos WHERE id = ?', [intId]);
+    const todo = results[0][0]
+
     if (!todo) {
       res.status(404).json({ success: false, data: {} });
     } else {
