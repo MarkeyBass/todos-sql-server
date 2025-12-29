@@ -1,8 +1,3 @@
-import { getNextId, readTodos, writeTodos } from "../utils/todosStorage.js";
-import path from "path";
-const __dirname = path.resolve();
-const TODOS_PATH = process.env.TODOS_PATH || path.join(__dirname, "data", "todos.json");
-
 // {baseUrl}/todos
 // {baseUrl}/todos?completed=true
 // {baseUrl}/todos?completed=false
