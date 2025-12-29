@@ -43,8 +43,8 @@ export const getTodo = async (req, res) => {
     const intId = parseInt(id);
     if (isNaN(intId)) throw new Error("Invalid id, please use an integer.");
 
-    const results = await req.dbConn.query('SELECT * FROM todos WHERE id = ?', [intId]);
-    const todo = results[0][0]
+    const results = await req.dbConn.query("SELECT * FROM todos WHERE id = ?", [intId]);
+    const todo = results[0][0];
 
     if (!todo) {
       res.status(404).json({ success: false, data: {} });
@@ -63,17 +63,49 @@ export const updateTodo = async (req, res) => {
     const { body } = req;
     const intId = parseInt(id);
     if (isNaN(intId)) throw new Error("Invalid id, please use an integer.");
-    const todos = await readTodos(TODOS_PATH);
-    const todo = todos.find((t) => t.id === intId);
+
+    const results = await req.dbConn.query("SELECT * FROM todos WHERE id = ?", [intId]);
+    const todo = results[0][0];
     if (!todo) {
-      res.status(404).json({ success: false, data: {} });
+      res
+        .status(404)
+        .json({ success: false, data: {}, message: `todo with the id of ${intId} not found` });
     } else {
-      todo.title = body.title || todo.title;
-      todo.description = body.description || todo.description;
-      todo.completed = body.completed || todo.completed;
-      todo.updated_at = new Date();
-      await writeTodos(todos, TODOS_PATH);
-      res.status(200).json({ success: true, data: todo });
+
+      // Flow example:
+      // ==============
+      // const str = "UPDATE todos SET title = ?, completed = ?, updated_at = ? WHERE id = ?"
+      // let updateQueryArr = ["title = ?", "completed = ?", "updated_at = ?"];
+      // let updateQuery = "UPDATE todos SET" + updateQueryArr.join(", ") + "WHERE id = ?";
+      // let sqlQueryParams = ["walk the dog" , true, new Date(), id];
+
+      //// Build update query dynamically based on provided fields
+      const updateQueryArr = [];
+      const sqlQueryParams = [];
+
+      if (body.title !== undefined) {
+        updateQueryArr.push("title = ?");
+        sqlQueryParams.push(body.title);
+      }
+      if (body.description !== undefined) {
+        updateQueryArr.push("description = ?");
+        sqlQueryParams.push(body.description);
+      }
+      if (body.completed !== undefined) {
+        updateQueryArr.push("completed = ?");
+        // sqlQueryParams.push(body.completed);
+        sqlQueryParams.push(body.completed === true || body.completed === "true");
+      }
+      updateQueryArr.push("updated_at = ? ");
+      sqlQueryParams.push(new Date());
+
+      const updateQuery = `UPDATE todos SET ${updateQueryArr.join(", ")} WHERE id = ?`;
+      sqlQueryParams.push(intId);
+
+      await req.dbConn.query(updateQuery, sqlQueryParams);
+      const updatedResults = await req.dbConn.query("SELECT * FROM todos WHERE id = ?", [intId]);
+      const updatedTodo = updatedResults[0][0];
+      res.status(200).json({ success: true, data: updatedTodo });
     }
   } catch (error) {
     res.status(500).json({ success: false, data: error.message });
@@ -86,14 +118,12 @@ export const deleteTodo = async (req, res) => {
     const { id } = req.params;
     const intId = parseInt(id);
     if (isNaN(intId)) throw new Error("Invalid id, please use an integer.");
-    const todos = await readTodos(TODOS_PATH);
-    const todo = todos.find((t) => t.id === intId);
+    const results = await req.dbConn.query("SELECT * FROM todos WHERE id = ?", [intId]);
+    const todo = results[0][0];
     if (!todo) {
-      res.status(404).json({ success: false, data: {} });
+      res.status(404).json({ success: false, data: {}, message: `Todo with id ${id} not found` });
     } else {
-      const indexToDelete = todos.findIndex((t) => t.id === intId);
-      todos.splice(indexToDelete, 1);
-      await writeTodos(todos, TODOS_PATH);
+      const resultsDel = await req.dbConn.query("DELETE FROM todos WHERE id = ?", [intId]);
       res.status(200).json({ success: true, data: {} });
     }
   } catch (error) {
